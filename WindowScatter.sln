@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36623.8 d17.14
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WindowScatter", "WindowScatter\WindowScatter.csproj", "{767D04C7-AE2A-434C-AC3D-8B5BCDA8AD7F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{767D04C7-AE2A-434C-AC3D-8B5BCDA8AD7F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{767D04C7-AE2A-434C-AC3D-8B5BCDA8AD7F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{767D04C7-AE2A-434C-AC3D-8B5BCDA8AD7F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{767D04C7-AE2A-434C-AC3D-8B5BCDA8AD7F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {F7FF4C5A-CC79-44D8-8B80-DEF5409FE677}
+	EndGlobalSection
+EndGlobal

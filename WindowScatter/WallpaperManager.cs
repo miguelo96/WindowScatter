@@ -3,10 +3,7 @@ using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-<<<<<<< HEAD
-=======
 using System.Windows.Media.Effects;
->>>>>>> 1f55bf1ddbf4e18119e1c76ef1d3d81b79dcf846
 using System.Windows.Media.Imaging;
 using Microsoft.Win32;
 
@@ -62,15 +59,11 @@ namespace WindowScatter
                     Canvas.SetLeft(backgroundImage, offsetX);
                     Canvas.SetTop(backgroundImage, offsetY);
 
-<<<<<<< HEAD
-                    backgroundImage.Effect = null;
-=======
                     backgroundImage.Effect = new BlurEffect
                     {
                         Radius = 0,
                         KernelType = KernelType.Gaussian
                     };
->>>>>>> 1f55bf1ddbf4e18119e1c76ef1d3d81b79dcf846
                 }
                 else
                 {
