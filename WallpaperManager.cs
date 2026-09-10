@@ -34,8 +34,8 @@ namespace WindowScatter
                     bitmap.EndInit();
                     bitmap.Freeze();
 
-                    double screenWidth = SystemParameters.PrimaryScreenWidth;
-                    double screenHeight = SystemParameters.PrimaryScreenHeight;
+                    double screenWidth = GetOverlayWidth();
+                    double screenHeight = GetOverlayHeight();
 
                     double imageWidth = bitmap.PixelWidth;
                     double imageHeight = bitmap.PixelHeight;
@@ -69,6 +69,26 @@ namespace WindowScatter
             {
                 parentWindow.Background = new SolidColorBrush(Color.FromRgb(30, 30, 30));
             }
+        }
+
+        /// <summary>
+        /// Overlay size in DIPs (i.e. the target monitor size). Falls back to the
+        /// primary screen when the window has no size yet.
+        /// </summary>
+        private double GetOverlayWidth()
+        {
+            double w = parentWindow.ActualWidth;
+            if (w <= 0) w = parentWindow.Width;
+            if (double.IsNaN(w) || w <= 0) w = SystemParameters.PrimaryScreenWidth;
+            return w;
+        }
+
+        private double GetOverlayHeight()
+        {
+            double h = parentWindow.ActualHeight;
+            if (h <= 0) h = parentWindow.Height;
+            if (double.IsNaN(h) || h <= 0) h = SystemParameters.PrimaryScreenHeight;
+            return h;
         }
 
         public string? GetWallpaperPath()

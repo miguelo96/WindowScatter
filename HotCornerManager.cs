@@ -59,10 +59,12 @@ namespace WindowScatter
             if (!GetCursorPos(out cursorPos))
                 return;
 
-            double screenWidth = SystemParameters.PrimaryScreenWidth;
-            double screenHeight = SystemParameters.PrimaryScreenHeight;
+            // Per-monitor detection: with a secondary monitor on the left,
+            // cursor X is negative there, so testing against the primary
+            // screen size would fire along the whole top edge (#13).
+            var monitor = MonitorHelper.GetMonitorFromPoint(cursorPos.X, cursorPos.Y);
 
-            bool inCornerNow = IsInHotCorner(cursorPos, screenWidth, screenHeight);
+            bool inCornerNow = IsInHotCorner(cursorPos, monitor);
 
             if (inCornerNow && !isInCorner)
             {
@@ -102,21 +104,21 @@ namespace WindowScatter
             }
         }
 
-        private bool IsInHotCorner(POINT cursor, double screenWidth, double screenHeight)
+        private bool IsInHotCorner(POINT cursor, MonitorHelper.MonitorBounds monitor)
         {
             switch (settings.HotCornerPosition.ToLower())
             {
                 case "topleft":
-                    return cursor.X <= CORNER_THRESHOLD && cursor.Y <= CORNER_THRESHOLD;
+                    return cursor.X <= monitor.Left + CORNER_THRESHOLD && cursor.Y <= monitor.Top + CORNER_THRESHOLD;
 
                 case "topright":
-                    return cursor.X >= screenWidth - CORNER_THRESHOLD && cursor.Y <= CORNER_THRESHOLD;
+                    return cursor.X >= monitor.Right - CORNER_THRESHOLD && cursor.Y <= monitor.Top + CORNER_THRESHOLD;
 
                 case "bottomleft":
-                    return cursor.X <= CORNER_THRESHOLD && cursor.Y >= screenHeight - CORNER_THRESHOLD;
+                    return cursor.X <= monitor.Left + CORNER_THRESHOLD && cursor.Y >= monitor.Bottom - CORNER_THRESHOLD;
 
                 case "bottomright":
-                    return cursor.X >= screenWidth - CORNER_THRESHOLD && cursor.Y >= screenHeight - CORNER_THRESHOLD;
+                    return cursor.X >= monitor.Right - CORNER_THRESHOLD && cursor.Y >= monitor.Bottom - CORNER_THRESHOLD;
 
                 default:
                     return false;

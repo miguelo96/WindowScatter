@@ -6,6 +6,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
@@ -19,6 +20,13 @@
   <ItemGroup>
     <PackageReference Include="System.Drawing.Common" Version="10.0.0" />
     <PackageReference Include="TerraFX.Interop.Windows" Version="10.0.20348" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- WinForms is referenced only for NotifyIcon; keep its implicit usings out
+         so System.Windows.Forms/System.Drawing names don't clash with WPF. -->
+    <Using Remove="System.Windows.Forms" />
+    <Using Remove="System.Drawing" />
   </ItemGroup>
 
   

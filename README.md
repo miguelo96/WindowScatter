@@ -18,6 +18,8 @@ A Windows utility that brings macOS Exposé-style window management to your desk
 - **Configurable hotkey** — default is `Win+W`, changeable in `settings.json`
 - **Desktop capture background** — blurred live desktop snapshot as the overlay background, falls back to wallpaper if unavailable
 - **Multi-monitor aware** — scatter view opens on whichever monitor your cursor is on
+- **Tray icon** — the app stays recallable while hidden (double-click to scatter); menu has Run-on-startup toggle and Exit
+- **Run on startup** — optional `RunOnStartup` setting (HKCU Run key), applied on launch
 
 ---
 
@@ -74,6 +76,7 @@ Settings are stored in `settings.json` next to the executable. The file is creat
 | `HotCornerPosition` | string | `"TopLeft"` | Which corner activates scatter. Options: `TopLeft`, `TopRight`, `BottomLeft`, `BottomRight` |
 | `HotCornerDelay` | int | `500` | Milliseconds the cursor must stay in the corner before triggering |
 | `AnimationSpeed` | double | `0.25` | Duration of scatter/return animation in seconds |
+| `RunOnStartup` | bool | `false` | Launch at logon via HKCU Run key (also toggleable from the tray menu) |
 
 ### Hotkey format
 
@@ -136,8 +139,7 @@ WindowScatter/
 ## Known Limitations
 
 - Windows only — relies heavily on DWM and Win32 APIs
-- Hot corner detection only tracks the primary monitor's dimensions (secondary monitor corners don't trigger)
-- No settings UI — configuration requires manually editing `settings.json`
+- No settings UI — configuration requires manually editing `settings.json` (or the tray menu for startup)
 - No much visual
 
 ---

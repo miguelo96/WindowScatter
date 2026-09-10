@@ -39,6 +39,26 @@ namespace WindowScatter
         [DllImport("user32.dll")]
         internal static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
 
+        [DllImport("user32.dll")]
+        internal static extern IntPtr GetForegroundWindow();
+
+        [DllImport("user32.dll")]
+        internal static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
+
+        [DllImport("kernel32.dll")]
+        internal static extern uint GetCurrentThreadId();
+
+        [DllImport("user32.dll")]
+        internal static extern bool AttachThreadInput(uint idAttach, uint idAttachTo, bool fAttach);
+
+        [DllImport("user32.dll")]
+        internal static extern bool BringWindowToTop(IntPtr hWnd);
+
+        [DllImport("user32.dll")]
+        internal static extern bool AllowSetForegroundWindow(int dwProcessId);
+
+        internal const int ASFW_ANY = -1;
+
         #endregion
 
         #region DWM (Desktop Window Manager)
@@ -82,6 +102,13 @@ namespace WindowScatter
 
         [DllImport("dwmapi.dll")]
         public static extern int DwmGetWindowAttribute(IntPtr hwnd, int dwAttribute, out RECT pvAttribute, int cbAttribute);
+
+        // Cloaked windows (e.g. suspended UWP apps) report IsWindowVisible == true
+        // but are not actually on screen. DWMWA_CLOAKED != 0 means "don't show".
+        internal const int DWMWA_CLOAKED = 14;
+
+        [DllImport("dwmapi.dll", EntryPoint = "DwmGetWindowAttribute")]
+        internal static extern int DwmGetWindowAttributeInt(IntPtr hwnd, int dwAttribute, out int pvAttribute, int cbAttribute);
 
         [DllImport("dwmapi.dll")]
         public static extern int DwmQueryThumbnailSourceSize(IntPtr hThumbnail, out SIZE pSize);
@@ -254,6 +281,10 @@ namespace WindowScatter
 
         [DllImport("user32.dll")]
         internal static extern uint GetDpiForWindow(IntPtr hwnd);
+
+        // shcore.dll, Windows 8.1+. dpiType 0 = effective DPI.
+        [DllImport("shcore.dll")]
+        internal static extern int GetDpiForMonitor(IntPtr hmonitor, int dpiType, out uint dpiX, out uint dpiY);
 
         // --- dwmapi private exports (ordinal-based; research credit: ADeltaX) ---
 

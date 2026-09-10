@@ -16,6 +16,7 @@ namespace WindowScatter
         private static extern bool GetMonitorInfo(IntPtr hMonitor, ref MONITORINFO lpmi);
 
         private const uint MONITOR_DEFAULTTONEAREST = 0x00000002;
+        private const uint MONITOR_DEFAULTTOPRIMARY = 0x00000001;
 
         [StructLayout(LayoutKind.Sequential)]
         private struct POINT
@@ -58,15 +59,51 @@ namespace WindowScatter
                 return GetPrimaryMonitor();
             }
 
-            IntPtr hMonitor = MonitorFromPoint(cursorPos, MONITOR_DEFAULTTONEAREST);
+            return GetMonitorFromPoint(cursorPos.X, cursorPos.Y);
+        }
+
+        public static MonitorBounds GetMonitorFromPoint(int x, int y)
+        {
+            POINT pt = new POINT { X = x, Y = y };
+            IntPtr hMonitor = MonitorFromPoint(pt, MONITOR_DEFAULTTONEAREST);
             return GetMonitorBounds(hMonitor);
         }
 
         public static MonitorBounds GetPrimaryMonitor()
         {
             POINT point = new POINT { X = 0, Y = 0 };
-            IntPtr hMonitor = MonitorFromPoint(point, MONITOR_DEFAULTTONEAREST);
+            IntPtr hMonitor = MonitorFromPoint(point, MONITOR_DEFAULTTOPRIMARY);
             return GetMonitorBounds(hMonitor);
+        }
+
+        /// <summary>
+        /// Effective DPI scale (dpi/96) for the monitor containing the given bounds'
+        /// center. Used to convert physical pixels (Win32/DWM space) to WPF DIPs.
+        /// Returns 1.0 when the DPI cannot be determined (e.g. older Windows).
+        /// </summary>
+        public static double GetDpiScaleForMonitor(MonitorBounds monitor)
+        {
+            return GetDpiScaleAtPoint(
+                monitor.Left + monitor.Width / 2,
+                monitor.Top + monitor.Height / 2);
+        }
+
+        public static double GetDpiScaleAtPoint(int x, int y)
+        {
+            try
+            {
+                POINT pt = new POINT { X = x, Y = y };
+                IntPtr hMonitor = MonitorFromPoint(pt, MONITOR_DEFAULTTONEAREST);
+                if (hMonitor != IntPtr.Zero)
+                {
+                    uint dpiX, dpiY;
+                    if (GetDpiForMonitor(hMonitor, 0, out dpiX, out dpiY) == 0 && dpiX > 0)
+                        return dpiX / 96.0;
+                }
+            }
+            catch { }
+
+            return 1.0;
         }
 
         private static MonitorBounds GetMonitorBounds(IntPtr hMonitor)

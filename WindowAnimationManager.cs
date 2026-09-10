@@ -50,6 +50,12 @@ namespace WindowScatter
 
         public bool IsAnimating => animRunning;
 
+        /// <summary>
+        /// Invoked on the UI thread after the scatter animation settles.
+        /// Used to re-sync WPF hit-test targets with the live DWM positions (#10).
+        /// </summary>
+        public Action? OnScatterComplete { get; set; }
+
         public WindowAnimationManager(List<WindowThumb> windowThumbs)
         {
             this.windowThumbs = windowThumbs;
@@ -294,6 +300,8 @@ namespace WindowScatter
                     if (thumb.TitleLabel != null) thumb.TitleLabel.Opacity = 1;
                     UpdateThumbnailPosition(thumb);
                 }
+
+                try { OnScatterComplete?.Invoke(); } catch { }
 
                 // Scatter complete: keep DWM warm and ready while the overlay sits idle.
                 StartKeepAlive();

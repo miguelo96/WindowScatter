@@ -75,10 +75,13 @@ namespace WindowScatter
         {
             if (desktopThumbnail == IntPtr.Zero) return;
 
+            // DWM thumbnail rects are physical pixels, not WPF DIPs: using
+            // owner.ActualWidth/Height here stretched the background whenever the
+            // monitor scale was anything but 100% (#10).
             desktopProps.rcDestination.Left = 0;
             desktopProps.rcDestination.Top = 0;
-            desktopProps.rcDestination.Right = (int)owner.ActualWidth;
-            desktopProps.rcDestination.Bottom = (int)owner.ActualHeight;
+            desktopProps.rcDestination.Right = currentMonitorBounds.Right - currentMonitorBounds.Left;
+            desktopProps.rcDestination.Bottom = currentMonitorBounds.Bottom - currentMonitorBounds.Top;
 
             desktopProps.rcSource = currentMonitorBounds;
             desktopProps.opacity = opacity;

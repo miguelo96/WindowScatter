@@ -66,12 +66,22 @@ namespace WindowScatter
 
         private AppSettings settings;
 
+        // Effective DPI scale (dpi/96) of the monitor the overlay is currently on.
+        // Layout/DWM coordinates are physical pixels; WPF children are DIPs (#10).
+        private double currentDpiScale = 1.0;
+
+        private System.Windows.Forms.NotifyIcon? trayIcon;
+
         public MainWindow()
         {
             InitializeComponent();
 
             settings = AppSettings.Load();
             configuredHotkey = HotkeyParser.Parse(settings.Hotkey);
+
+            // Covers the plain .exe release too: registry follows settings (#15).
+            settings.ApplyRunOnStartup();
+            SetupTrayIcon();
 
             this.Topmost = true;
             this.ShowActivated = true;
@@ -97,6 +107,11 @@ namespace WindowScatter
             {
                 await Dispatcher.InvokeAsync(async () =>
                 {
+                    // Already open: dwelling in the corner must not re-scatter
+                    // (not even the bring-to-front fallback - just stay quiet).
+                    if (this.Visibility == Visibility.Visible)
+                        return;
+
                     if (CanActivateScatter())
                     {
                         await StartScatterAsync();
@@ -116,6 +131,11 @@ namespace WindowScatter
             animationManager = new WindowAnimationManager(windowThumbs);
             thumbnailManager = new ThumbnailManager(ScatterCanvas, windowThumbs, helper.Handle, OnWindowClicked, OnWindowHovered);
             windowEnumerator = new WindowEnumerator(helper.Handle);
+
+            animationManager.OnScatterComplete = () =>
+            {
+                try { thumbnailManager.SyncClickBordersToThumbs(currentDpiScale); } catch { }
+            };
 
             if (!useDesktopCapture)
             {
@@ -331,6 +351,8 @@ namespace WindowScatter
 
         protected override void OnClosed(EventArgs e)
         {
+            try { trayIcon?.Dispose(); } catch { }
+            trayIcon = null;
             RestoreWorkingSet();
             hwndSource?.RemoveHook(WndProc);
             wallpaperCheckTimer?.Stop();
@@ -372,9 +394,14 @@ namespace WindowScatter
         {
             lock (transitionLock)
             {
+                // The overlay being visible means a scatter session is already
+                // open: flags alone can't tell, since they reset once the opening
+                // animation finishes. Without this, a hot-corner dwell or hotkey
+                // re-press while open re-ran the whole scatter on top of itself.
                 return !isScatterActive &&
                        !animationManager.IsAnimating &&
-                       !isTransitioning;
+                       !isTransitioning &&
+                       this.Visibility != Visibility.Visible;
             }
         }
 
@@ -414,23 +441,6 @@ namespace WindowScatter
 
             try
             {
-                System.Diagnostics.Process.GetCurrentProcess().PriorityClass =
-                    System.Diagnostics.ProcessPriorityClass.AboveNormal;
-            }
-            catch { }
-
-            if (!timerPeriodActive)
-            {
-                timeBeginPeriod(1);
-                timerPeriodActive = true;
-            }
-            SetThreadExecutionState(ES_CONTINUOUS | ES_DISPLAY_REQUIRED | ES_SYSTEM_REQUIRED);
-
-            bool wasIdle = (DateTime.Now - lastActivationTime).TotalSeconds > IDLE_THRESHOLD_SECONDS;
-            lastActivationTime = DateTime.Now;
-
-            try
-            {
                 var helper = new WindowInteropHelper(this);
                 IntPtr ourHwnd = helper.EnsureHandle();
 
@@ -441,11 +451,45 @@ namespace WindowScatter
                 POINT pt;
                 Win32Interop.GetCursorPos(out pt);
 
+                // Enumerate BEFORE any process-wide side effects: with no windows
+                // there is nothing to scatter, so give feedback and bail out
+                // without touching priority/timer/execution state (#14).
+                var windowsOnTargetMonitor = windowEnumerator.EnumerateVisibleWindows(targetMonitorBounds);
+
+                if (windowsOnTargetMonitor.Count == 0)
+                {
+                    ShowNoWindowsToast(targetMonitorBounds);
+                    return;
+                }
+
+                try
+                {
+                    System.Diagnostics.Process.GetCurrentProcess().PriorityClass =
+                        System.Diagnostics.ProcessPriorityClass.AboveNormal;
+                }
+                catch { }
+
+                if (!timerPeriodActive)
+                {
+                    timeBeginPeriod(1);
+                    timerPeriodActive = true;
+                }
+                SetThreadExecutionState(ES_CONTINUOUS | ES_DISPLAY_REQUIRED | ES_SYSTEM_REQUIRED);
+
+                bool wasIdle = (DateTime.Now - lastActivationTime).TotalSeconds > IDLE_THRESHOLD_SECONDS;
+                lastActivationTime = DateTime.Now;
+
+                // Win32/DWM work in physical pixels, WPF in DIPs: size the overlay
+                // in DIPs so it lands exactly on the target monitor at any scale,
+                // and remember the scale for click-target conversion (#10).
+                currentDpiScale = MonitorHelper.GetDpiScaleForMonitor(targetMonitorBounds);
+                if (currentDpiScale <= 0) currentDpiScale = 1.0;
+
                 this.WindowState = WindowState.Normal;
-                this.Width = targetMonitorBounds.Width;
-                this.Height = targetMonitorBounds.Height - 1;
-                this.Left = targetMonitorBounds.Left;
-                this.Top = targetMonitorBounds.Top;
+                this.Width = targetMonitorBounds.Width / currentDpiScale;
+                this.Height = targetMonitorBounds.Height / currentDpiScale - 1;
+                this.Left = targetMonitorBounds.Left / currentDpiScale;
+                this.Top = targetMonitorBounds.Top / currentDpiScale;
 
                 desktopCaptureManager.SetMonitorBounds(
                     targetMonitorBounds.Left,
@@ -456,10 +500,6 @@ namespace WindowScatter
 
                 if (wasIdle) Cleanup();
                 else animationManager.StopAllAnimations();
-
-                var windowsOnTargetMonitor = windowEnumerator.EnumerateVisibleWindows(targetMonitorBounds);
-
-                if (windowsOnTargetMonitor.Count == 0) return;
 
                 var currentHandles = windowsOnTargetMonitor.Select(w => w.Handle).ToList();
                 bool windowStateChanged = HasWindowStateChanged(currentHandles);
@@ -497,7 +537,7 @@ namespace WindowScatter
                     wallpaperManager.SetWallpaperBackground();
                 }
 
-                thumbnailManager.RegisterThumbnails(layouts, animationManager);
+                thumbnailManager.RegisterThumbnails(layouts, animationManager, currentDpiScale);
                 SelectClosestWindowToPoint(pt.X - targetMonitorBounds.Left, pt.Y - targetMonitorBounds.Top);
 
                 await System.Threading.Tasks.Task.Delay(16);
@@ -706,6 +746,133 @@ namespace WindowScatter
                     }
                 }
             }), DispatcherPriority.Background);
+        }
+
+        #endregion
+
+        #region Tray Icon & Empty-State Toast
+
+        /// <summary>
+        /// Keeps the app recallable while hidden: tray icon re-triggers scatter on
+        /// double-click and exposes Run-on-startup + Exit (#12, #15).
+        /// </summary>
+        private void SetupTrayIcon()
+        {
+            try
+            {
+                trayIcon = new System.Windows.Forms.NotifyIcon
+                {
+                    Text = "WindowScatter (Win+W)",
+                    Icon = System.Drawing.SystemIcons.Application,
+                    Visible = true
+                };
+
+                var menu = new System.Windows.Forms.ContextMenuStrip();
+
+                var triggerItem = new System.Windows.Forms.ToolStripMenuItem(
+                    "Scatter windows",
+                    null,
+                    async (s, e) =>
+                    {
+                        await Dispatcher.InvokeAsync(async () =>
+                        {
+                            if (CanActivateScatter())
+                                await StartScatterAsync();
+                        });
+                    });
+
+                var startupItem = new System.Windows.Forms.ToolStripMenuItem("Run on startup")
+                {
+                    Checked = settings.RunOnStartup,
+                    CheckOnClick = true
+                };
+                startupItem.CheckedChanged += (s, e) =>
+                {
+                    settings.RunOnStartup = startupItem.Checked;
+                    settings.Save();
+                    settings.ApplyRunOnStartup();
+                };
+
+                var exitItem = new System.Windows.Forms.ToolStripMenuItem(
+                    "Exit", null, (s, e) => { Close(); });
+
+                menu.Items.Add(triggerItem);
+                menu.Items.Add(startupItem);
+                menu.Items.Add(new System.Windows.Forms.ToolStripSeparator());
+                menu.Items.Add(exitItem);
+                trayIcon.ContextMenuStrip = menu;
+
+                trayIcon.DoubleClick += async (s, e) =>
+                {
+                    await Dispatcher.InvokeAsync(async () =>
+                    {
+                        if (CanActivateScatter())
+                            await StartScatterAsync();
+                    });
+                };
+            }
+            catch
+            {
+                trayIcon = null;
+            }
+        }
+
+        /// <summary>
+        /// Brief, non-interactive feedback when scatter is invoked with no
+        /// scatterable windows, instead of an empty/confusing overlay (#14).
+        /// </summary>
+        private void ShowNoWindowsToast(MonitorHelper.MonitorBounds monitor)
+        {
+            try
+            {
+                double scale = MonitorHelper.GetDpiScaleForMonitor(monitor);
+                if (scale <= 0) scale = 1.0;
+
+                const double toastW = 280;
+                const double toastH = 64;
+
+                var label = new TextBlock
+                {
+                    Text = "No windows to show",
+                    Foreground = System.Windows.Media.Brushes.White,
+                    FontSize = 14,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    VerticalAlignment = VerticalAlignment.Center
+                };
+
+                var toast = new Window
+                {
+                    WindowStyle = WindowStyle.None,
+                    ResizeMode = ResizeMode.NoResize,
+                    ShowInTaskbar = false,
+                    Topmost = true,
+                    ShowActivated = false,
+                    AllowsTransparency = true,
+                    Background = System.Windows.Media.Brushes.Transparent,
+                    Width = toastW,
+                    Height = toastH,
+                    Content = new Border
+                    {
+                        Background = new System.Windows.Media.SolidColorBrush(
+                            System.Windows.Media.Color.FromArgb(230, 30, 30, 30)),
+                        CornerRadius = new CornerRadius(10),
+                        Child = label
+                    }
+                };
+
+                toast.Left = (monitor.Left + monitor.Width / 2.0) / scale - toastW / 2.0;
+                toast.Top = (monitor.Top + monitor.Height / 2.0) / scale - toastH / 2.0;
+                toast.Show();
+
+                var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1.2) };
+                timer.Tick += (s, e) =>
+                {
+                    timer.Stop();
+                    try { toast.Close(); } catch { }
+                };
+                timer.Start();
+            }
+            catch { }
         }
 
         #endregion

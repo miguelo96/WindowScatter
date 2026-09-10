@@ -28,6 +28,11 @@ namespace WindowScatter
                     if (!IsWindowVisible(h) || IsIconic(h))
                         return true;
 
+                    // Suspended UWP apps and other ghost windows report visible
+                    // but are cloaked by DWM - never actually on screen (#9).
+                    if (IsCloaked(h))
+                        return true;
+
                     int len = GetWindowTextLength(h);
                     if (len == 0) return true;
 
@@ -103,13 +108,26 @@ namespace WindowScatter
         {
             var lower = title.ToLower();
             return lower.Contains("window scatter") ||
-                   lower.Contains("program manager") ||
-                   lower.Contains("microsoft text input") ||
-                   lower.Contains("windows input") ||
-                   lower.Contains("nvidia geforce") ||
-                   title == "Default IME" ||
-                   title == "MSCTFIME UI" ||
-                   title == "GDI+ Window";
+                    lower.Contains("program manager") ||
+                    lower.Contains("microsoft text input") ||
+                    lower.Contains("windows input") ||
+                    lower.Contains("nvidia geforce") ||
+                    title == "Default IME" ||
+                    title == "MSCTFIME UI" ||
+                    title == "GDI+ Window";
+        }
+
+        private static bool IsCloaked(IntPtr h)
+        {
+            try
+            {
+                int cloaked;
+                if (DwmGetWindowAttributeInt(h, DWMWA_CLOAKED, out cloaked, sizeof(int)) == 0)
+                    return cloaked != 0;
+            }
+            catch { }
+
+            return false;
         }
     }
 }

@@ -27,8 +27,13 @@ namespace WindowScatter
             this.onWindowHovered = onWindowHovered;
         }
 
-        public void RegisterThumbnails(List<WindowLayout> layouts, WindowAnimationManager animationManager)
+        /// <param name="dpiScale">Effective DPI scale of the target monitor (dpi/96).
+        /// Layout coordinates are physical pixels (DWM space); WPF click targets
+        /// live in DIPs, so geometry is divided by this scale (#10).</param>
+        public void RegisterThumbnails(List<WindowLayout> layouts, WindowAnimationManager animationManager, double dpiScale = 1.0)
         {
+            if (dpiScale <= 0) dpiScale = 1.0;
+
             foreach (var layout in layouts)
             {
                 var win = layout.Window;
@@ -46,22 +51,27 @@ namespace WindowScatter
                 double startW = currentRect.Right - currentRect.Left;
                 double startH = currentRect.Bottom - currentRect.Top;
 
+                double targetW = layout.Width / dpiScale;
+                double targetH = layout.Height / dpiScale;
+                double targetX = layout.X / dpiScale;
+                double targetY = layout.Y / dpiScale;
+
                 var clickBorder = new Border
                 {
                     Background = System.Windows.Media.Brushes.Transparent,
-                    Width = layout.Width,
-                    Height = layout.Height,
+                    Width = targetW,
+                    Height = targetH,
                     Cursor = Cursors.Hand,
                     IsHitTestVisible = false
                 };
 
-                Canvas.SetLeft(clickBorder, layout.X);
-                Canvas.SetTop(clickBorder, layout.Y);
+                Canvas.SetLeft(clickBorder, targetX);
+                Canvas.SetTop(clickBorder, targetY);
 
                 var highlightBorder = new Border
                 {
-                    Width = layout.Width + 10,
-                    Height = layout.Height + 10,
+                    Width = targetW + 10,
+                    Height = targetH + 10,
                     BorderThickness = new System.Windows.Thickness(3),
                     BorderBrush = new SolidColorBrush(Color.FromRgb(255, 255, 255)),
                     CornerRadius = new System.Windows.CornerRadius(8),
@@ -76,13 +86,13 @@ namespace WindowScatter
                     }
                 };
 
-                Canvas.SetLeft(highlightBorder, layout.X - 5);
-                Canvas.SetTop(highlightBorder, layout.Y - 5);
+                Canvas.SetLeft(highlightBorder, targetX - 5);
+                Canvas.SetTop(highlightBorder, targetY - 5);
 
                 var titleLabel = new TextBlock
                 {
                     Text = TrimTitle(win.Title),
-                    Width = Math.Max(140, layout.Width),
+                    Width = Math.Max(140, targetW),
                     Foreground = Brushes.White,
                     FontSize = 13,
                     FontWeight = System.Windows.FontWeights.SemiBold,
@@ -99,8 +109,8 @@ namespace WindowScatter
                     }
                 };
 
-                Canvas.SetLeft(titleLabel, layout.X + (layout.Width - titleLabel.Width) / 2);
-                Canvas.SetTop(titleLabel, layout.Y + layout.Height + 8);
+                Canvas.SetLeft(titleLabel, targetX + (targetW - titleLabel.Width) / 2);
+                Canvas.SetTop(titleLabel, targetY + targetH + 8);
 
                 var thumb = new WindowThumb
                 {
@@ -137,6 +147,47 @@ namespace WindowScatter
                 scatterCanvas.Children.Add(titleLabel);
                 scatterCanvas.Children.Add(clickBorder);
                 windowThumbs.Add(thumb);
+            }
+        }
+
+        /// <summary>
+        /// Re-aligns WPF click/highlight borders with the live DWM thumbnail
+        /// positions. Called on the UI thread once the scatter animation settles,
+        /// so hit-testing matches what the user actually sees (#10). Must use the
+        /// same DPI scale that was passed to <see cref="RegisterThumbnails"/>.
+        /// </summary>
+        public void SyncClickBordersToThumbs(double dpiScale)
+        {
+            if (dpiScale <= 0) dpiScale = 1.0;
+
+            foreach (var thumb in windowThumbs)
+            {
+                if (thumb.ClickBorder == null) continue;
+
+                double x = thumb.CurrentX / dpiScale;
+                double y = thumb.CurrentY / dpiScale;
+                double w = thumb.CurrentWidth / dpiScale;
+                double h = thumb.CurrentHeight / dpiScale;
+
+                thumb.ClickBorder.Width = w;
+                thumb.ClickBorder.Height = h;
+                Canvas.SetLeft(thumb.ClickBorder, x);
+                Canvas.SetTop(thumb.ClickBorder, y);
+
+                if (thumb.HighlightBorder != null)
+                {
+                    thumb.HighlightBorder.Width = w + 10;
+                    thumb.HighlightBorder.Height = h + 10;
+                    Canvas.SetLeft(thumb.HighlightBorder, x - 5);
+                    Canvas.SetTop(thumb.HighlightBorder, y - 5);
+                }
+
+                if (thumb.TitleLabel != null)
+                {
+                    thumb.TitleLabel.Width = Math.Max(140, w);
+                    Canvas.SetLeft(thumb.TitleLabel, x + (w - thumb.TitleLabel.Width) / 2);
+                    Canvas.SetTop(thumb.TitleLabel, y + h + 8);
+                }
             }
         }
 

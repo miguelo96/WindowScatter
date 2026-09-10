@@ -78,7 +78,7 @@ namespace WindowScatter
                         else
                             ShowWindow(windowHandle, SW_RESTORE);
 
-                        SetForegroundWindow(windowHandle);
+                        ForceForegroundWindow(windowHandle);
                     });
 
                     await Task.Delay(30);
@@ -90,6 +90,52 @@ namespace WindowScatter
             {
                 onSwitchComplete?.Invoke();
             }
+        }
+
+        /// <summary>
+        /// A bare SetForegroundWindow call silently fails when our process is not
+        /// the foreground one (the common case when dismissing an overlay), which
+        /// made clicks appear to do nothing every other time (#10). Fall back to
+        /// the thread-input attach dance, which is the documented workaround.
+        /// </summary>
+        private static void ForceForegroundWindow(IntPtr windowHandle)
+        {
+            try
+            {
+                if (SetForegroundWindow(windowHandle))
+                    return;
+
+                if (GetForegroundWindow() == windowHandle)
+                    return;
+
+                try { AllowSetForegroundWindow(ASFW_ANY); } catch { }
+
+                IntPtr foreground = GetForegroundWindow();
+                uint foregroundThread = 0;
+                uint currentThread = GetCurrentThreadId();
+
+                try
+                {
+                    if (foreground != IntPtr.Zero)
+                        foregroundThread = GetWindowThreadProcessId(foreground, out _);
+
+                    if (foregroundThread != 0 && foregroundThread != currentThread)
+                        AttachThreadInput(currentThread, foregroundThread, true);
+
+                    BringWindowToTop(windowHandle);
+                    SetForegroundWindow(windowHandle);
+                }
+                finally
+                {
+                    try
+                    {
+                        if (foregroundThread != 0 && foregroundThread != currentThread)
+                            AttachThreadInput(currentThread, foregroundThread, false);
+                    }
+                    catch { }
+                }
+            }
+            catch { }
         }
     }
 }
