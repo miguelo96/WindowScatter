@@ -1,0 +1,5 @@
+"Cycle","Phase","Timestamp","CpuSeconds","WorkingSetMB","PrivateMB"
+"1","before-open","23:05:10.022","0.67","90.7","63.6"
+"1","overlay-open","23:05:10.877","0.69","90.7","63.6"
+"1","after-idle","23:05:15.886","0.69","91","63.9"
+"1","after-close","23:05:17.105","0.69","91","63.9"
