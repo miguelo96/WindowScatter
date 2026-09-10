@@ -201,7 +201,6 @@ namespace WindowScatter
         public static extern IntPtr MonitorFromPoint(POINT pt, uint dwFlags);
 
         internal const int DWM_TNP_RECTSOURCE = 0x00000002;
-<<<<<<< HEAD
 
         #region DirectComposition host window + private DWM visual APIs
 
@@ -335,7 +334,5 @@ namespace WindowScatter
         internal const uint ES_CONTINUOUS = 0x80000000;
 
         #endregion
-=======
->>>>>>> 1f55bf1ddbf4e18119e1c76ef1d3d81b79dcf846
     }
 }

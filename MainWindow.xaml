@@ -22,31 +22,18 @@
                 Opacity="0"
                 Width="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=ActualWidth}"
                 Height="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=ActualHeight}"/>
-<<<<<<< HEAD
         <!-- Dark overlay for contrast. -->
         <Border x:Name="DimOverlay"
-=======
-        <!-- Dark overlay for contrast; blur is configured in code. -->
-        <Border x:Name="BlurOverlay"
->>>>>>> 1f55bf1ddbf4e18119e1c76ef1d3d81b79dcf846
                 Panel.ZIndex="2"
                 Background="#60000000"
                 Width="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=ActualWidth}"
                 Height="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=ActualHeight}"/>
 
         <!-- Hit-test rectangles for DWM thumbnails. -->
-<<<<<<< HEAD
         <Canvas x:Name="ScatterCanvas"
                 Background="Transparent"
                 Panel.ZIndex="3"
                 Width="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=ActualWidth}"
                  Height="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=ActualHeight}"/>
-=======
-        <Canvas x:Name="ScatterCanvas" 
-                Background="Transparent"
-                Panel.ZIndex="3"
-                Width="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=ActualWidth}"
-                Height="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=ActualHeight}"/>
->>>>>>> 1f55bf1ddbf4e18119e1c76ef1d3d81b79dcf846
     </Canvas>
 </Window>

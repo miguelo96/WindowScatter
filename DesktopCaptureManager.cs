@@ -4,10 +4,6 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Interop;
-<<<<<<< HEAD
-=======
-using System.Windows.Media.Effects;
->>>>>>> 1f55bf1ddbf4e18119e1c76ef1d3d81b79dcf846
 using static WindowScatter.Win32Interop;
 
 namespace WindowScatter
@@ -18,10 +14,6 @@ namespace WindowScatter
         private readonly Window owner;
         private IntPtr desktopThumbnail = IntPtr.Zero;
         private DWM_THUMBNAIL_PROPERTIES desktopProps;
-<<<<<<< HEAD
-=======
-        private BlurEffect blurEffect;
->>>>>>> 1f55bf1ddbf4e18119e1c76ef1d3d81b79dcf846
 
         private RECT currentMonitorBounds;
 
@@ -30,17 +22,6 @@ namespace WindowScatter
             this.backgroundImage = backgroundImage;
             this.owner = owner;
 
-<<<<<<< HEAD
-=======
-            this.blurEffect = new BlurEffect
-            {
-                Radius = 0,
-                RenderingBias = RenderingBias.Performance,
-                KernelType = KernelType.Gaussian
-            };
-            this.backgroundImage.Effect = this.blurEffect;
-
->>>>>>> 1f55bf1ddbf4e18119e1c76ef1d3d81b79dcf846
             desktopProps = new DWM_THUMBNAIL_PROPERTIES
             {
                 dwFlags = DWM_TNP_RECTDESTINATION | DWM_TNP_OPACITY | DWM_TNP_VISIBLE | DWM_TNP_SOURCECLIENTAREAONLY | DWM_TNP_RECTSOURCE,
@@ -90,11 +71,7 @@ namespace WindowScatter
             return true;
         }
 
-<<<<<<< HEAD
         public void UpdateDesktopThumbnail(byte opacity = 255)
-=======
-        public void UpdateDesktopThumbnail()
->>>>>>> 1f55bf1ddbf4e18119e1c76ef1d3d81b79dcf846
         {
             if (desktopThumbnail == IntPtr.Zero) return;
 
@@ -104,24 +81,12 @@ namespace WindowScatter
             desktopProps.rcDestination.Bottom = (int)owner.ActualHeight;
 
             desktopProps.rcSource = currentMonitorBounds;
-<<<<<<< HEAD
             desktopProps.opacity = opacity;
-=======
->>>>>>> 1f55bf1ddbf4e18119e1c76ef1d3d81b79dcf846
             desktopProps.dwFlags = DWM_TNP_RECTDESTINATION | DWM_TNP_OPACITY | DWM_TNP_VISIBLE | DWM_TNP_RECTSOURCE;
 
             DwmUpdateThumbnailProperties(desktopThumbnail, ref desktopProps);
         }
 
-<<<<<<< HEAD
-=======
-        public void SetBlur(double radius)
-        {
-            if (blurEffect != null)
-                blurEffect.Radius = radius;
-        }
-
->>>>>>> 1f55bf1ddbf4e18119e1c76ef1d3d81b79dcf846
         public void Cleanup()
         {
             if (desktopThumbnail != IntPtr.Zero)
@@ -129,12 +94,6 @@ namespace WindowScatter
                 DwmUnregisterThumbnail(desktopThumbnail);
                 desktopThumbnail = IntPtr.Zero;
             }
-<<<<<<< HEAD
-=======
-
-            if (blurEffect != null)
-                blurEffect.Radius = 0;
->>>>>>> 1f55bf1ddbf4e18119e1c76ef1d3d81b79dcf846
         }
 
         private IntPtr GetDesktopWindowHandle()

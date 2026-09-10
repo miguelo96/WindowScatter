@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 using System;
-=======
-﻿using System;
->>>>>>> 1f55bf1ddbf4e18119e1c76ef1d3d81b79dcf846
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -50,7 +46,6 @@ namespace WindowScatter
         private DispatcherTimer? wallpaperCheckTimer;
         private string? lastWallpaperPath;
 
-<<<<<<< HEAD
 
         private DateTime lastActivationTime = DateTime.MinValue;
         private const double IDLE_THRESHOLD_SECONDS = 2.0;
@@ -68,12 +63,6 @@ namespace WindowScatter
         private UIntPtr origWsMax;
         private ulong wsFloorMinBytes;
         private bool wsFloorApplied;
-=======
-        private DateTime lastActivationTime = DateTime.MinValue;
-        private const double IDLE_THRESHOLD_SECONDS = 2.0;
-
-        private DispatcherTimer thumbnailKeepAliveTimer;
->>>>>>> 1f55bf1ddbf4e18119e1c76ef1d3d81b79dcf846
 
         private AppSettings settings;
 
@@ -115,13 +104,6 @@ namespace WindowScatter
                 });
             });
             hotCornerManager.Start();
-<<<<<<< HEAD
-=======
-
-            thumbnailKeepAliveTimer = new DispatcherTimer();
-            thumbnailKeepAliveTimer.Interval = TimeSpan.FromSeconds(1);
-            thumbnailKeepAliveTimer.Tick += ThumbnailKeepAlive_Tick;
->>>>>>> 1f55bf1ddbf4e18119e1c76ef1d3d81b79dcf846
         }
 
         #region Initialization
@@ -131,12 +113,7 @@ namespace WindowScatter
             var helper = new WindowInteropHelper(this);
             helper.EnsureHandle();
 
-<<<<<<< HEAD
             animationManager = new WindowAnimationManager(windowThumbs);
-=======
-            animationManager = new WindowAnimationManager(BackgroundImage, BlurOverlay, windowThumbs);
-            animationManager.SetDesktopCaptureManager(desktopCaptureManager);
->>>>>>> 1f55bf1ddbf4e18119e1c76ef1d3d81b79dcf846
             thumbnailManager = new ThumbnailManager(ScatterCanvas, windowThumbs, helper.Handle, OnWindowClicked, OnWindowHovered);
             windowEnumerator = new WindowEnumerator(helper.Handle);
 
@@ -206,28 +183,6 @@ namespace WindowScatter
 
         #endregion
 
-<<<<<<< HEAD
-=======
-        #region Thumbnail Keepalive
-
-        private void ThumbnailKeepAlive_Tick(object? sender, EventArgs e)
-        {
-            if (this.Visibility == Visibility.Visible && windowThumbs.Count > 0)
-            {
-                foreach (var thumb in windowThumbs)
-                {
-                    if (thumb.ThumbnailHandle != IntPtr.Zero)
-                    {
-                        SIZE size;
-                        DwmQueryThumbnailSourceSize(thumb.ThumbnailHandle, out size);
-                    }
-                }
-            }
-        }
-
-        #endregion
-
->>>>>>> 1f55bf1ddbf4e18119e1c76ef1d3d81b79dcf846
         #region Keyboard Hook
 
         private IntPtr SetHook(LowLevelKeyboardProc proc)
@@ -336,14 +291,10 @@ namespace WindowScatter
                 }
             }
 
-<<<<<<< HEAD
             bool isEsc = e.Key == Key.Escape ||
                          (e.Key == Key.System && e.SystemKey == Key.Escape);
 
             if (isEsc && !animationManager.IsAnimating && !isTransitioning)
-=======
-            if (e.Key == Key.Escape && !animationManager.IsAnimating && !isTransitioning)
->>>>>>> 1f55bf1ddbf4e18119e1c76ef1d3d81b79dcf846
             {
                 e.Handled = true;
                 CleanupAndClose();
@@ -380,7 +331,6 @@ namespace WindowScatter
 
         protected override void OnClosed(EventArgs e)
         {
-<<<<<<< HEAD
             RestoreWorkingSet();
             hwndSource?.RemoveHook(WndProc);
             wallpaperCheckTimer?.Stop();
@@ -390,11 +340,6 @@ namespace WindowScatter
                 timerPeriodActive = false;
             }
             SetThreadExecutionState(ES_CONTINUOUS);
-=======
-            hwndSource?.RemoveHook(WndProc);
-            wallpaperCheckTimer?.Stop();
-            thumbnailKeepAliveTimer?.Stop();
->>>>>>> 1f55bf1ddbf4e18119e1c76ef1d3d81b79dcf846
             hotCornerManager?.Stop();
             desktopCaptureManager?.Cleanup();
 
@@ -404,15 +349,12 @@ namespace WindowScatter
                 hookID = IntPtr.Zero;
             }
 
-<<<<<<< HEAD
             try
             {
                 System.Diagnostics.Process.GetCurrentProcess().PriorityClass = normalPriorityClass;
             }
             catch { }
 
-=======
->>>>>>> 1f55bf1ddbf4e18119e1c76ef1d3d81b79dcf846
             base.OnClosed(e);
         }
 
@@ -470,7 +412,6 @@ namespace WindowScatter
                 isScatterActive = true;
             }
 
-<<<<<<< HEAD
             try
             {
                 System.Diagnostics.Process.GetCurrentProcess().PriorityClass =
@@ -485,8 +426,6 @@ namespace WindowScatter
             }
             SetThreadExecutionState(ES_CONTINUOUS | ES_DISPLAY_REQUIRED | ES_SYSTEM_REQUIRED);
 
-=======
->>>>>>> 1f55bf1ddbf4e18119e1c76ef1d3d81b79dcf846
             bool wasIdle = (DateTime.Now - lastActivationTime).TotalSeconds > IDLE_THRESHOLD_SECONDS;
             lastActivationTime = DateTime.Now;
 
@@ -578,13 +517,9 @@ namespace WindowScatter
                 ForceWindowToTop(ourHwnd);
 
                 windowSwitcher = new WindowSwitcher(thumbnailManager, animationManager, windowThumbs, layouts, OnSwitchComplete);
-<<<<<<< HEAD
                 // Pin pages before the scatter animation allocates/renders: the spike
                 // in the memory graph is mostly DWM thumbnail surfaces mapping in.
                 ApplyWorkingSetFloor();
-=======
-                thumbnailKeepAliveTimer.Start();
->>>>>>> 1f55bf1ddbf4e18119e1c76ef1d3d81b79dcf846
                 animationManager.StartScatterAnimation();
             }
             finally
@@ -678,10 +613,6 @@ namespace WindowScatter
 
             try
             {
-<<<<<<< HEAD
-=======
-                thumbnailKeepAliveTimer.Stop();
->>>>>>> 1f55bf1ddbf4e18119e1c76ef1d3d81b79dcf846
                 windowSwitcher!.SwitchToWindow(windowHandle, Dispatcher);
             }
             catch
@@ -783,16 +714,11 @@ namespace WindowScatter
 
         private void Cleanup()
         {
-<<<<<<< HEAD
-=======
-            thumbnailKeepAliveTimer?.Stop();
->>>>>>> 1f55bf1ddbf4e18119e1c76ef1d3d81b79dcf846
             animationManager?.StopAllAnimations();
             thumbnailManager?.CleanupAllThumbnails();
             selectedWindowHandle = IntPtr.Zero;
         }
 
-<<<<<<< HEAD
         #region Working Set Floor
 
         // Between the scatter and return animations the overlay sits fully idle:
@@ -874,11 +800,6 @@ namespace WindowScatter
                 timerPeriodActive = false;
             }
             SetThreadExecutionState(ES_CONTINUOUS);
-=======
-        private void FullCleanup()
-        {
-            thumbnailKeepAliveTimer?.Stop();
->>>>>>> 1f55bf1ddbf4e18119e1c76ef1d3d81b79dcf846
             animationManager?.StopAllAnimations();
             thumbnailManager?.CleanupAllThumbnails();
 
@@ -887,7 +808,6 @@ namespace WindowScatter
             selectedWindowHandle = IntPtr.Zero;
 
             desktopCaptureManager?.Cleanup();
-<<<<<<< HEAD
 
             // Overlay is hidden by now, so reclaim scatter-time garbage off the
             // critical path with a non-blocking background collect.
@@ -898,8 +818,6 @@ namespace WindowScatter
                 System.Diagnostics.Process.GetCurrentProcess().PriorityClass = normalPriorityClass;
             }
             catch { }
-=======
->>>>>>> 1f55bf1ddbf4e18119e1c76ef1d3d81b79dcf846
         }
 
         private void CleanupAndClose()
@@ -912,11 +830,6 @@ namespace WindowScatter
                 isTransitioning = true;
             }
 
-<<<<<<< HEAD
-=======
-            thumbnailKeepAliveTimer.Stop();
-
->>>>>>> 1f55bf1ddbf4e18119e1c76ef1d3d81b79dcf846
             animationManager.StartReturnAnimation(async () =>
             {
                 this.Visibility = Visibility.Hidden;

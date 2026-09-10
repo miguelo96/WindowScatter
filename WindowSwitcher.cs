@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 using System;
-=======
-﻿using System;
->>>>>>> 1f55bf1ddbf4e18119e1c76ef1d3d81b79dcf846
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -31,7 +27,6 @@ namespace WindowScatter
 
         public void SwitchToWindow(IntPtr windowHandle, Dispatcher dispatcher)
         {
-<<<<<<< HEAD
             // DWM thumbnail stacking follows registration order rather than the WPF
             // canvas Z-order. Re-register only the clicked thumbnail so it stays on
             // top while it returns to its real window. This is intentionally kept
@@ -95,101 +90,6 @@ namespace WindowScatter
             {
                 onSwitchComplete?.Invoke();
             }
-=======
-            thumbnailManager.BringThumbnailToFront(windowHandle, animationManager);
-
-            Task.Run(async () =>
-            {
-                // Use cached DWM frame bounds; GetWindowRect can include invisible borders.
-                var capturedStates = new List<(IntPtr handle, double x, double y, double w, double h)>();
-
-                foreach (var thumb in windowThumbs)
-                {
-                    var originalLayout = cachedLayouts?.FirstOrDefault(l => l.Window.Handle == thumb.WindowHandle);
-
-                    if (originalLayout != null)
-                    {
-                        var origRect = originalLayout.Window.OriginalRect;
-                        capturedStates.Add((
-                            thumb.WindowHandle,
-                            origRect.Left,
-                            origRect.Top,
-                            origRect.Right - origRect.Left,
-                            origRect.Bottom - origRect.Top
-                        ));
-                    }
-                    else
-                    {
-                        RECT rect;
-                        if (GetWindowRect(thumb.WindowHandle, out rect))
-                        {
-                            capturedStates.Add((
-                                thumb.WindowHandle,
-                                rect.Left,
-                                rect.Top,
-                                rect.Right - rect.Left,
-                                rect.Bottom - rect.Top
-                            ));
-                        }
-                    }
-                }
-
-                var layout = cachedLayouts?.FirstOrDefault(l => l.Window.Handle == windowHandle);
-                bool wasMaximized = layout != null && layout.Window.WasMaximized;
-
-                await dispatcher.InvokeAsync(async () =>
-                {
-                    try
-                    {
-                        foreach (var state in capturedStates)
-                        {
-                            var thumb = windowThumbs.FirstOrDefault(t => t.WindowHandle == state.handle);
-                            if (thumb != null)
-                            {
-                                thumb.StartX = state.x;
-                                thumb.StartY = state.y;
-                                thumb.StartWidth = state.w;
-                                thumb.StartHeight = state.h;
-                            }
-                        }
-
-                        // Refresh any missing thumbnails before the return animation begins.
-                        await Task.Run(() =>
-                        {
-                            dispatcher.Invoke(() =>
-                            {
-                                thumbnailManager.ReregisterAllThumbnails(animationManager);
-                            });
-                        });
-
-                        await Task.Delay(10);
-
-                        animationManager.StartReturnAnimation(async () =>
-                        {
-                            await Task.Delay(100);
-
-                            await Task.Run(() =>
-                            {
-                                if (wasMaximized)
-                                    ShowWindow(windowHandle, SW_SHOWMAXIMIZED);
-                                else
-                                    ShowWindow(windowHandle, SW_RESTORE);
-
-                                SetForegroundWindow(windowHandle);
-                            });
-
-                            await Task.Delay(50);
-
-                            onSwitchComplete?.Invoke();
-                        });
-                    }
-                    catch
-                    {
-                        onSwitchComplete?.Invoke();
-                    }
-                }, DispatcherPriority.Normal);
-            });
->>>>>>> 1f55bf1ddbf4e18119e1c76ef1d3d81b79dcf846
         }
     }
 }

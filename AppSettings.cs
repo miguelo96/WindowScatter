@@ -13,12 +13,9 @@ namespace WindowScatter
         public int HotCornerDelay { get; set; } = 500;
         public double AnimationSpeed { get; set; } = 0.25;
 
-<<<<<<< HEAD
         /// <summary>"auto" = DirectComposition when supported, "dcomp" = force-on, "legacy" = force old DWM-thumbnail path.</summary>
         public string Renderer { get; set; } = "auto";
 
-=======
->>>>>>> 1f55bf1ddbf4e18119e1c76ef1d3d81b79dcf846
         private static string SettingsPath => Path.Combine(
             AppDomain.CurrentDomain.BaseDirectory, "settings.json");
 
