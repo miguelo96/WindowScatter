@@ -35,7 +35,7 @@ A Windows utility that brings macOS Exposé-style window management to your desk
 ### Build from source
 
 ```bash
-git clone https://github.com/yourname/WindowScatter.git
+git clone https://github.com/miguelo96/WindowScatter.git
 cd WindowScatter
 dotnet build -c Release
 dotnet run
