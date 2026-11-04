@@ -10,16 +10,16 @@ A Windows utility that brings macOS Exposé-style window management to your desk
 
 ## Features
 
-- **Live DWM thumbnails** — windows are rendered in real-time using the Desktop Window Manager API, not static screenshots
-- **Scatter animation** — windows animate from their original positions to the overview and back
-- **Smart layout** — windows are arranged to avoid overlap while preserving spatial context (each thumbnail appears near where its real window actually is)
-- **Keyboard navigation** — arrow keys, Tab, and Enter to navigate and select without touching the mouse
-- **Hot corners** — move your cursor to a screen corner to trigger the overview automatically
-- **Configurable hotkey** — default is `Win+W`, changeable in `settings.json`
-- **Desktop capture background** — blurred live desktop snapshot as the overlay background, falls back to wallpaper if unavailable
-- **Multi-monitor aware** — scatter view opens on whichever monitor your cursor is on
-- **Tray icon** — the app stays recallable while hidden (double-click to scatter); menu has Run-on-startup toggle and Exit
-- **Run on startup** — optional `RunOnStartup` setting (HKCU Run key), applied on launch
+- **Live DWM thumbnails**: windows are rendered in real-time using the Desktop Window Manager API, not static screenshots
+- **Scatter animation**: windows animate from their original positions to the overview and back
+- **Smart layout**: windows are arranged to avoid overlap while preserving spatial context (each thumbnail appears near where its real window actually is)
+- **Keyboard navigation**: arrow keys, Tab, and Enter to navigate and select without touching the mouse (still needs some work)
+- **Hot corners**: move your cursor to a screen corner to trigger the overview automatically
+- **Configurable hotkey**: default is `Win+W`, changeable in `settings.json`
+- **Desktop capture background**: blurred live desktop snapshot as the overlay background, falls back to wallpaper if unavailable
+- **Multi-monitor aware**: scatter view opens on whichever monitor your cursor is on
+- **Tray icon**: the app stays recallable while hidden (double-click to scatter); menu has Run-on-startup toggle and Exit
+- **Run on startup**: optional `RunOnStartup` setting (HKCU Run key), applied on launch
 
 ---
 
@@ -138,8 +138,8 @@ WindowScatter/
 
 ## Known Limitations
 
-- Windows only — relies heavily on DWM and Win32 APIs
-- No settings UI — configuration requires manually editing `settings.json` (or the tray menu for startup)
+- Windows only. Relies heavily on DWM and Win32 APIs
+- No settings UI (yet). Configuration requires manually editing `settings.json` (or the tray menu for startup)
 - No much visual
 
 ---
